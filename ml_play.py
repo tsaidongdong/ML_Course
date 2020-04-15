@@ -59,12 +59,12 @@ def ml_loop():
             if ball_destination<0:
                 ball_destination=-(ball_destination)
             print(ball_destination)
-            if ball_destination>platform_center_x   and ball_position_history[-1][1]>200 and vy>0 :
+            if ball_destination>platform_center_x   and ball_position_history[-1][1]>200  :
                 #print(ball_destination)
 
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_RIGHT)
 
-            elif ball_destination<platform_center_x  and ball_position_history[-1][1]>200 and vy>0:
+            elif ball_destination<platform_center_x  and ball_position_history[-1][1]>200 :
                 #print(ball_destination)
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
             else:
