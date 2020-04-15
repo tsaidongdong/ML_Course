@@ -21,39 +21,51 @@ def ml_loop():
 
     # === Here is the execution order of the loop === #
     # 1. Put the initialization code here.
-    ball_served = False
+    ball_position_history = []
 
-    # 2. Inform the game process that ml process is ready before start the loop.
     comm.ml_ready()
-
-    # 3. Start an endless loop.
     while True:
-        # 3.1. Receive the scene information sent from the game process.
+        
         scene_info = comm.get_scene_info()
+        ball_position_history.append(scene_info.ball)
+        platform_center_x = scene_info.platform[0]+25
+        if (len(ball_position_history)) == 1:
+            ball_going_down = 0
+        elif ball_position_history[-1][1] - ball_position_history[-2][1]:
+            ball_going_down = 1
+            vy = ball_position_history[-1][1]-ball_position_history[-2][1]
+            vx = ball_position_history[-1][0]-ball_position_history[-2][0]
+        else:
+            ball_going_down =0
 
-        # 3.2. If the game is over or passed, the game process will reset
-        #      the scene and wait for ml process doing resetting job.
         if scene_info.status == GameStatus.GAME_OVER or \
             scene_info.status == GameStatus.GAME_PASS:
-            # Do some stuff if needed
-            ball_served = False
 
-            # 3.2.1. Inform the game process that ml process is ready
             comm.ml_ready()
             continue
 
-        # 3.3. Put the code here to handle the scene information
+        if ball_going_down ==1 :
 
-        # 3.4. Send the instruction for this frame to the game process
-        if not ball_served:
-            comm.send_instruction(scene_info.frame, PlatformAction.SERVE_TO_LEFT)
-            ball_served = True
-        else:
-            ball_x=scene_info.ball[0]
-            Platform_x=scene_info.platform[0]
-            if ball_x>Platform_x:
+            move_distance=(400-ball_position_history[-1][1])/vy*vx
+            if vy<0 and vx<0:
+                move_distance=-move_distance
+            if vx>0 and vy<0:
+                move_distance=-move_distance
+            ball_destination = ball_position_history[-1][0]+move_distance
+            #print(platform_center_x
+            print(ball_destination)
+            if ball_destination>200:
+                ball_destination=200-(ball_destination-200)
+            if ball_destination<0:
+                ball_destination=-(ball_destination)
+            print(ball_destination)
+            if ball_destination>platform_center_x and ball_position_history[-1][1]>100  :
+                #print(ball_destination)
+
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_RIGHT)
-            elif ball_x<Platform_x:
+
+            elif ball_destination<platform_center_x and ball_position_history[-1][1]>100:
+                #print(ball_destination)
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
-            else :
-                comm.send_instruction(scene_info.frame, PlatformAction.NONE)
+            else:
+                ball_destination = platform_center_x
